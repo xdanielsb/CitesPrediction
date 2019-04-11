@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import random
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
@@ -28,13 +29,15 @@ def scalarMultipliers( s ):
     print(s.min_)
 
 if __name__ == "__main__":
-    config = 1
+    config = 5
     res = open("results_conf_{}".format(config),"w+")
-    res.write("run,mes,nameImg")
+    res.write("run,mes,nameImg\n")
 
     for test in range( 10 ):
+        data = open("data_figure_{}_{}".format(config, test+1), "w+")
+        data.write("predicted,real\n")
         X, Y, LX, LY = readData()
-        X, Y = shuffle( X, Y , random_state=1)
+        X, Y = shuffle( X, Y , random_state=random.randint(1, 1000))
         #Scaler
         scalerX = MinMaxScaler(feature_range=(0,1))
         scalerY = MinMaxScaler(feature_range=(0,1))
@@ -64,9 +67,9 @@ if __name__ == "__main__":
         # create neural network model
         model = Sequential()
         model.add(Dense(1, input_dim=4, activation='linear'))
-        model.add(Dense(2, activation='linear'))
-        model.add(Dense(2, activation='tanh'))
-        model.add(Dense(2, activation='linear'))
+        model.add(Dense(50, activation='linear'))
+        model.add(Dense(50, activation='tanh'))
+        model.add(Dense(50, activation='linear'))
         model.add(Dense(1, activation='linear'))
         model.compile(loss="mean_squared_error", optimizer="adam")
 
@@ -83,14 +86,18 @@ if __name__ == "__main__":
 
         pairs = np.array(list(zip(sp, rv)))
 
+        for pair in pairs:
+            pre = pair[0][0]
+            rea = pair[1][0]
+            data.write("{},{}\n".format(pre, rea))
+
         plt.figure()
 
-        print( rv.shape[0])
-        print( sp.shape[0])
         plt.plot(range(rv.shape[0]),rv,'r-',label='actual')
         plt.plot(range(sp.shape[0]),sp,'k--',label='predict')
         plt.legend(loc='best')
-        name = 'results{}_{}.png'.format(config, test+1)
-        plt.savefig(name)
-        res.write("{},{},{}".format(test+1, mse,name))
+        name = 'results{}_{}.eps'.format(config, test+1)
+        plt.savefig(name , format='eps', dpi=1000)
+        res.write("{},{},{}\n".format(test+1, mse,name))
+        data.close()
     res.close()
